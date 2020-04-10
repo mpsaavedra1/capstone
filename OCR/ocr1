@@ -1,2 +1,56 @@
-hola
-sis e pueede
+##LIBRERIAS##
+import pytesseract
+import cv2
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+  
+#LEER LA IMAGEN
+img = cv2.imread('p2.jpeg') #leo un archivo imagen
+
+#PREPROCESAMIENTO
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  #imagen en gris
+th = cv2.threshold(gray, 110, 255, cv2.THRESH_BINARY)[1] #imagen con bordes marcados
+
+##BUSCO Y RECORTO LA PANTALLA DE LA IMAGEN
+contours, hierarchy = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) #busco todo los contornos
+
+for contour in contours:
+    (x,y,w,h) = cv2.boundingRect(contour) #veo cuales contornos forman rectangulitos, w=weight, h=hight
+    cv2.rectangle(th, (x,y), (x+w,y+h), (0,255,0), 2) #dibujo rectangulitos
+    if cv2.contourArea(contour) > 110000: #mido y comparo el área de cada rectangulito
+        if cv2.contourArea(contour) < 120000: #busco e tamaño que podría ser mi pantalla
+            pantalla = img[y:y+h, x:x+w] #recorto la imágen
+            cv2.imshow('pantalla', pantalla)  #muestro la imegn recortada
+            if cv2.waitKey(0) & 0xff == 27:  #vacío la memoria en el terminal
+                cv2.destroyAllWindows() 
+            
+#AHORA RECORTAMOS LAS ZONAS REQUERIDAS DE LA PANTALLA
+            pantallagris = cv2.cvtColor(pantalla, cv2.COLOR_BGR2GRAY)  #pantalla en gris
+            pantallath = cv2.threshold(pantallagris, 105, 255, cv2.THRESH_BINARY)[1] #pantalla con bordes marcados b y n 
+                       
+            contoursp, hierarchy = cv2.findContours(pantallath, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            #busco los contornos 
+            
+            for contour in contoursp:
+                (x,y,w,h) = cv2.boundingRect(contour) #veo cuales forman rectangulitos
+                cv2.rectangle(pantallath, (x,y), (x+w,y+h), (0,255,0), 2)
+                if cv2.contourArea(contour) > 1000:  #veo si el área de los rectangulitos es acorde al tamaño buscado
+                    if cv2.contourArea(contour) < 2000:
+                        parvarmed = pantalla[y:y+h, x:x+w]
+                        #cv2.imshow('parVariableMedición', parvarmed) #muestro los pares variable-medición encontrados
+                        #if cv2.waitKey(0) & 0xff == 27:  #vacío la memoria en el terminal
+                            #cv2.destroyAllWindows() 
+                            
+                        gray = cv2.cvtColor(parvarmed, cv2.COLOR_BGR2GRAY)  #cada uno en gris
+                        bina = cv2.bitwise_not(gray) #y binarizado
+                        
+                        cv2.imshow('cadaparbin', bina) #muestro los pares variable-medición encontrados
+                        if cv2.waitKey(0) & 0xff == 27:  #vacío la memoria en el terminal
+                            cv2.destroyAllWindows() 
+                            
+##BUSCAR TEXTO EN CADA ZONA/PAR (INCOMPLETO, NO LEE)##
+                        texto = pytesseract.image_to_string(bina, config='-l eng --oem 1 --psm 11') 
+                        #para saber que dice
+              
+
+
+
